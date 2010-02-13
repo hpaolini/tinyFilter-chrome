@@ -1,0 +1,274 @@
+<!--
+Copyright:
+
+    Copyright (C) 2010 Hunter Paolini <corvineum@hotmail.com>
+
+License:
+
+		This file is part of tinyFilter.
+
+    tinyFilter is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    tinyFilter is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with tinyFilter; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+-->
+<html>
+<head>
+<script>
+var tinyFilter_bg = {
+	prefs : {
+		content_filter : (function(){
+			return JSON.parse(localStorage.getItem("content_filter"));
+		})(),
+		profanity_filter : (function(){
+			return JSON.parse(localStorage.getItem("profanity_filter"));
+		})(),
+		subscriptions : (function(){
+			return JSON.parse(localStorage.getItem("subscriptions"));
+		})()
+	},
+
+	prepareHash : function(list){
+		var hashMap={},
+				l=list.length;
+		while(l--){
+			var keyword=list[l];
+			if(keyword===undefined)
+				continue;
+
+			keyword = escape(keyword.toLowerCase());
+			keyword = keyword.split("%20");
+			if(keyword.length==1){
+				hashMap[keyword[0]]=1;
+			}else{
+				var j=keyword.length, multi = "";
+				while(j--){
+				var k = hashMap[keyword[j]];
+				if(k===1){break;} /*worthless adding |word1 word2| when |word1| is present as an individual pattern*/
+				if(j===0){
+					if(k!=undefined){
+						if(!this.isDuplicate(k, multi)){
+							hashMap[keyword[0]].push(multi);
+						}
+					}else{
+						hashMap[keyword[0]]=[multi];
+					}
+				}else{
+					multi=(multi!="")?keyword[j]+" "+multi:keyword[j];
+					if(k!=undefined){
+						if(!this.isDuplicate(k, 0)){
+							hashMap[keyword[j]].push(0);
+						}
+					}else{
+						hashMap[keyword[j]]=[0];
+					}
+				}
+				}
+			}
+		}//alert(getKeys(hashMap));
+		return hashMap;
+	},
+
+	isDuplicate : function(arr, key){
+ 		var len=arr.length;
+ 		while(len--){
+			if(arr[len]==key){return true;}
+ 		}
+ 		return false;
+	},
+
+	generateSubscription : function(){
+		var dataURI = "data:text/plain;charset=utf-8,%23 TINYFILTER EXTENSION%0A%23 LIST SUBSCRIPTION%0A%23 DATE: " +
+								new Date() + "%0A%0A[tinyFilter]" +
+								"%0A%0A%23 Block pages based on following criteria" +
+								"%0ACONTENT_FILTER.BLOCK.SITES=" + this.prefs.content_filter.block.sites +
+								"%0A%0ACONTENT_FILTER.BLOCK.WORDS=" + this.prefs.content_filter.block.words +
+								"%0A%0A%23 Trust pages" +
+								"%0ACONTENT_FILTER.TRUST.SITES=" + this.prefs.content_filter.trust.sites +
+								"%0A%0A%23 Mask profanity" +
+								"%0APROFANITY_FILTER.WORDS=" + this.prefs.profanity_filter.words;
+		chrome.tabs.create({url:dataURI});
+	},
+
+	loadSubscription : function(url){
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url, false);
+		xhr.send();
+
+		var file = xhr.responseText.split(/[\n]+/),
+	    legit = false,
+	    re_comment = /^(#|\\s+#)/,		//comment preceded by #
+	    re_legit = /^\[tinyFilter\]/i,
+	    re_cfg_name = /.*\=/,
+	    line;
+
+		var subscriptions = {
+			content_filter : {
+				block : {},
+				trust : {}
+			},
+			profanity_filter : {}
+		};
+
+		for(var i=0, len=file.length; i<len; i++){
+			line = file[i];
+			
+			if(re_comment.test(line))
+				continue;
+		
+			if(re_legit.test(line)){
+				legit=true;
+				continue;
+			}
+
+			if(!legit){
+				alert("Subscription file is not valid.");
+				return false;
+			}
+
+			var cfg_found = re_cfg_name.test(line);
+			if(cfg_found){
+				var settings = line.replace(re_cfg_name, "");
+
+				if(settings.length!=0){				
+					if(line.indexOf("CONTENT_FILTER.BLOCK.SITES=")!=-1){
+						subscriptions.content_filter.block.sites = settings.split(",");
+					}else if(line.indexOf("CONTENT_FILTER.BLOCK.WORDS=")!=-1){
+						subscriptions.content_filter.block.words = settings.split(",");
+					}else if(line.indexOf("CONTENT_FILTER.TRUST.SITES=")!=-1){
+						subscriptions.content_filter.trust.sites = settings.split(",");
+					}else if(line.indexOf("PROFANITY_FILTER.WORDS=")!=-1){
+						subscriptions.profanity_filter.words = settings.split(",");			
+					}
+				}
+			}
+		}
+		return subscriptions;
+	},
+
+  load_default : function(){
+		var default_lists = this.loadSubscription("default.txt");
+		var content_filter = {
+			enabled : true,
+			advanced : {
+				warning : "This page is unavailable due to policy restrictions.",
+				stop_all : false,
+				reason : true,
+				redirect : ""
+			},
+			block : {
+				sites : default_lists.content_filter.block.sites,
+				words : default_lists.content_filter.block.words
+			},
+			trust	:	{
+				sites : default_lists.content_filter.trust.sites
+			}
+		};
+		var profanity_filter = {
+			enabled : true,
+			words : default_lists.profanity_filter.words
+		};
+		var subscriptions = {
+			enabled : false,
+			url : ""
+		};
+		
+		localStorage.setItem('content_filter', JSON.stringify(content_filter));
+		localStorage.setItem('profanity_filter', JSON.stringify(profanity_filter));
+		localStorage.setItem('subscriptions', JSON.stringify(subscriptions));
+		localStorage.setItem('first_run', JSON.stringify("false"));
+
+		//update background.html settings
+		this.prefs.content_filter = content_filter;
+		this.prefs.profanity_filter = profanity_filter;
+		this.prefs.subscriptions = subscriptions;
+	},
+
+	init : function(){
+		if(JSON.parse(localStorage.getItem("first_run"))!=="false")
+				this.load_default();
+
+		//append subscription lists to local settings
+		if(this.prefs.subscriptions.enabled){
+			this.prefs.content_filter.block.sites = 
+				this.prefs.content_filter.block.sites.concat(this.prefs.subscriptions.content_filter.block.sites);
+
+			this.prefs.content_filter.block.words = 
+				this.prefs.content_filter.block.words.concat(this.prefs.subscriptions.content_filter.block.words);
+
+			this.prefs.content_filter.trust.sites = 
+				this.prefs.content_filter.trust.sites.concat(this.prefs.subscriptions.content_filter.trust.sites);
+
+			this.prefs.profanity_filter.words =
+				this.prefs.profanity_filter.words.concat(this.prefs.subscriptions.profanity_filter.words);
+		}
+
+		if(this.prefs.content_filter.advanced.redirect){
+			this.prefs.content_filter.trust.sites = 
+			this.prefs.content_filter.trust.sites.concat(this.prefs.content_filter.advanced.redirect.replace(/^https?:\/\//i,""));
+		}
+
+		this.prefs.hash_bw = this.prepareHash(this.prefs.content_filter.block.words);
+		this.prefs.hash_pf = this.prepareHash(this.prefs.profanity_filter.words);
+	}
+};
+
+//TODO: clean up this messy monster
+(function updateSubscription(){
+if(tinyFilter_bg.prefs.subscriptions && tinyFilter_bg.prefs.subscriptions.enabled && 
+			(new Date().getTime() - tinyFilter_bg.prefs.subscriptions.last_update > 259200000)){
+	var response = tinyFilter_bg.loadSubscription(tinyFilter_bg.prefs.subscriptions.url);
+	if(response){
+		tinyFilter_bg.prefs.subscriptions.content_filter.block.sites = (response.content_filter.block.sites) ? response.content_filter.block.sites : [];
+		tinyFilter_bg.prefs.subscriptions.content_filter.block.words = (response.content_filter.block.words) ? response.content_filter.block.words : [];
+		tinyFilter_bg.prefs.subscriptions.content_filter.trust.sites = (response.content_filter.trust.sites) ? response.content_filter.trust.sites : [];
+		tinyFilter_bg.prefs.subscriptions.profanity_filter.words = (response.profanity_filter.words) ? response.profanity_filter.words : [];
+		tinyFilter_bg.prefs.subscriptions.last_update = new Date().getTime();
+		localStorage.setItem('subscriptions', JSON.stringify(tinyFilter_bg.prefs.subscriptions));
+		//alert("subscription list updated");
+	}
+}
+})();
+
+tinyFilter_bg.init();
+
+chrome.extension.onRequest.addListener(
+  function(request, sender, sendResponse){
+   	switch (request.name){
+	    case "getPreferences":
+  	    sendResponse(
+    	    tinyFilter_bg.prefs
+        );
+        break;
+			case "redirectPage":
+				loadURI(sender.tab);
+				break;
+        default: break;
+   	}
+  }
+);
+
+function loadURI(tab){
+ var tabUrl = tinyFilter_bg.prefs.content_filter.advanced.redirect;
+ chrome.tabs.update(tab.id, {url: tabUrl});
+}
+
+/*var getKeys = function(obj){
+  var v="";
+  for(var key in obj){
+    v=v+"\n"+key+": "+obj[key];
+  }
+  return v;
+}*/
+</script>
+</head>
+</html>

@@ -1,0 +1,340 @@
+<!--
+Copyright:
+
+    Copyright (C) 2010 Hunter Paolini <corvineum@hotmail.com>
+
+License:
+
+		This file is part of tinyFilter.
+
+    tinyFilter is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    tinyFilter is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with tinyFilter; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+-->
+<html>
+<head>
+<title>tinyFilter - Options</title>
+<link rel="stylesheet" href="style.css" type="text/css"/>
+<script type="text/javascript">
+var Dom = {
+  get: function(el) {
+    if (typeof el === 'string') {
+      return document.getElementById(el);
+    } else {
+      return el;
+    }
+  },
+  add: function(el, dest) {
+    var el = this.get(el);
+    var dest = this.get(dest);
+    dest.appendChild(el);
+  },
+  remove: function(el) {
+    var el = this.get(el);
+    el.parentNode.removeChild(el);
+  }
+};
+var Event = {
+  add: function() {
+    if (window.addEventListener) {
+  		return function(el, type, fn) {
+      Dom.get(el).addEventListener(type, fn, false);
+     	};
+    } else if (window.attachEvent) {
+      return function(el, type, fn) {
+      	var f = function() {
+    	  	fn.call(Dom.get(el), window.event);
+      	};
+      	Dom.get(el).attachEvent('on' + type, f);
+      };
+    }
+  }()
+};
+
+Event.add(window, 'load', function(){
+	Event.add('add_cf', 'click', function(){
+		var bu = Dom.get("bu").checked,
+		bw = Dom.get("bw").checked,
+		au = Dom.get("au").checked;
+				
+		if(!(bu || bw || au)){
+			alert("Please select the type of keyword to add.");
+			return false;
+		}
+
+		var keyword = Dom.get("keyword_cf").value;
+		keyword = keyword.replace(/<(.|\n)+?>/g,'');
+
+		if(bu){
+		  list_bs[list_bs.length]=keyword;			
+			populateList('blocked_url', keyword);
+		}else if(bw){
+		  list_bw[list_bw.length]=keyword;
+			populateList('blocked_word', keyword);
+		}else if(au){
+		  list_ts[list_ts.length]=keyword;
+			populateList('trusted_url', keyword);
+		}else {return false;}
+	});
+	Event.add('add_pf', 'click', function() {
+		var keyword = Dom.get("keyword_pf").value;
+		keyword = keyword.replace(/<(.|\n)+?>/g,'');
+		list_pf[list_pf.length]=keyword;
+		populateList('profanity_word', keyword);
+	});
+});
+
+function populateList(list, keyword){
+	var el = document.createElement('p');
+	var remove = document.createElement('span');
+	remove.setAttribute('class', 'link');
+	remove.innerHTML = '[x]';
+  el.innerHTML = keyword;
+	Dom.add(remove, el);
+	Dom.add(el, list);
+
+  Event.add(remove, 'click', function(e) {
+		var span = this.parentNode;
+		var keyword = span.innerHTML.replace(/<(.*)?>/g,'');
+		switch(span.parentNode.id){
+			case "blocked_url": removeKeyword(list_bs, keyword); break;
+			case "blocked_word": removeKeyword(list_bw, keyword); break;
+			case "trusted_url": removeKeyword(list_ts, keyword); break;
+			case "profanity_word": removeKeyword(list_pf, keyword); break;
+			default: break;
+		}
+    Dom.remove(span);
+  });
+}
+
+var list_bs = list_bw = list_ts = list_pf = [];
+
+function removeKeyword(list, keyword){
+	var l=list.length;
+	while(l--){if(list[l]==keyword){list.splice(l,1);}};
+}
+
+// Saves options
+function save_options() {
+	var content_filter = {
+		enabled : Dom.get("cf_status").checked,
+		advanced : {
+			warning : Dom.get("adv_warning").value || "This page is unavailable due to policy restrictions.",
+			stop_all : Dom.get("adv_stop").checked,
+			reason : Dom.get("adv_reason").checked,
+			redirect : (function(){
+				var adv_redirect = Dom.get("adv_redirect").value || "",
+						regex = /^(https?|ftp|file):\/\/.+$/i;
+				if(adv_redirect.length > 0 && !regex.test(adv_redirect)){
+					adv_redirect = "http://" + adv_redirect;
+				}
+				return adv_redirect;
+			})()
+		},
+		block : {
+			sites : list_bs,
+			words : list_bw
+		},
+		trust	:	{
+			sites : list_ts
+		}
+	};
+
+	var profanity_filter = {
+		enabled : Dom.get("pf_status").checked,
+		words : list_pf
+	};
+
+	var subscriptions = {
+		enabled : Dom.get("ls_status").checked,
+		url : Dom.get("ls_url").value,
+		content_filter : {
+			block : {},
+			trust : {}
+		},
+		profanity_filter : {}
+	};
+
+	//reference to background.html
+	var bg = chrome.extension.getBackgroundPage().tinyFilter_bg;
+
+	if(subscriptions.url.length > 0){
+		if(subscriptions.url != bg.prefs.subscriptions.url){
+				var response = bg.loadSubscription(subscriptions.url);
+				if(response){
+					subscriptions.content_filter.block.sites = (response.content_filter.block.sites) ? response.content_filter.block.sites : [];
+					subscriptions.content_filter.block.words = (response.content_filter.block.words) ? response.content_filter.block.words : [];
+					subscriptions.content_filter.trust.sites = (response.content_filter.trust.sites) ? response.content_filter.trust.sites : [];
+					subscriptions.profanity_filter.words = (response.profanity_filter.words) ? response.profanity_filter.words : [];
+					subscriptions.last_update = new Date().getTime();
+					//alert(subscriptions.last_update);
+				}else{
+					subscriptions.enabled = false;
+				}
+		}else{
+					subscriptions.content_filter.block.sites = bg.prefs.subscriptions.content_filter.block.sites;
+					subscriptions.content_filter.block.words = bg.prefs.subscriptions.content_filter.block.words;
+					subscriptions.content_filter.trust.sites = bg.prefs.subscriptions.content_filter.trust.sites;
+					subscriptions.profanity_filter.words = bg.prefs.subscriptions.profanity_filter.words;
+					subscriptions.last_update = (bg.prefs.subscriptions.last_update) ? bg.prefs.subscriptions.last_update : new Date().getTime();
+		}
+	}else{
+		subscriptions.enabled = false;
+	}
+
+	localStorage.setItem('content_filter', JSON.stringify(content_filter));
+	localStorage.setItem('profanity_filter', JSON.stringify(profanity_filter));
+	localStorage.setItem('subscriptions', JSON.stringify(subscriptions));
+
+	//update background.html settings
+		bg.prefs.content_filter = content_filter;
+		bg.prefs.profanity_filter = profanity_filter;
+		bg.prefs.subscriptions = subscriptions;
+		bg.init();
+
+  var status = Dom.get("status");
+  status.removeAttribute("style");
+  setTimeout(function() {
+    status.setAttribute("style","visibility:hidden");
+  }, 750);
+}
+
+// Restores options
+function restore_options(){
+	//localStorage.clear();
+
+	var cf = JSON.parse(localStorage.getItem('content_filter'));
+	Dom.get("cf_status").checked = cf.enabled || false;  
+  Dom.get("adv_stop").checked = cf.advanced.stop_all || false;
+ 	Dom.get("adv_reason").checked = cf.advanced.reason || false;
+ 	Dom.get("adv_warning").value = cf.advanced.warning;
+ 	Dom.get("adv_redirect").value = cf.advanced.redirect;
+
+	var pf = JSON.parse(localStorage.getItem('profanity_filter'));
+	Dom.get("pf_status").checked = pf.enabled || false;
+
+	var ls = JSON.parse(localStorage.getItem('subscriptions'));
+	Dom.get("ls_status").checked = ls.enabled || false;
+	Dom.get("ls_url").value = ls.url || "";
+
+  list_bs = cf.block.sites || [];
+  list_bw = cf.block.words || [];
+  list_ts = cf.trust.sites || [];
+  list_pf = pf.words || [];
+
+  var i=0, l=Math.max(list_bw.length, list_pf.length, list_bs.length, list_ts.length);
+  while(i<l){
+	var l1 = list_bw[i], l2 = list_pf[i], l3 = list_bs[i], l4 = list_ts[i];
+
+	if(l1)
+		populateList('blocked_word',l1);
+
+	if(l2)
+		populateList('profanity_word',l2);
+
+	if(l3)
+		populateList('blocked_url',l3);
+
+	if(l4)
+		populateList('trusted_url',l4);
+
+  i++;
+	};
+}
+
+function toogleList(e, id){
+	var el = Dom.get(id);
+	if(el.style.display == 'block'){
+		el.style.display = 'none';
+		if(e)
+			e.innerHTML = '[&#43;]';
+	}else{
+  	el.style.display = 'block';
+		if(e)
+			e.innerHTML = '[&#8211;]';
+	}
+}
+
+function genList(){
+	var bg = chrome.extension.getBackgroundPage().tinyFilter_bg;
+	bg.generateSubscription();
+}
+
+function reset_options(){
+	var x=window.confirm("Are you sure you want to reset the settings?")
+	if(x){
+		localStorage.removeItem('first_run');
+		chrome.extension.getBackgroundPage().tinyFilter_bg.init();
+		window.location.reload();
+	}
+}
+</script>
+ </head>
+ <body onload="restore_options()">
+ 	<div style="width:510px;margin:0 auto;color:#aaa;"><h1>tinyFilter</h1>&nbsp;&nbsp;by corvineum</div>
+   <!--<div class="box">
+	 	<div class="header">General Settings</div>
+		<div class="settings">
+		 <input type="checkbox"/>Lock extension to Google Chrome
+		</div>
+	 </div>-->
+	 <div class="box">
+	 	<div class="header">Content Filter</div>
+		<div class="settings">
+		 <span class="link" style="float:right;position:relative;top:2px" onclick="toogleList(null, 'adv_settings')">Advanced Settings</span>
+		 <input id="cf_status" type="checkbox"/>Enable Content Filter<br/><br/>
+		 <div id="adv_settings" class="advanced">
+		 <input type="checkbox" id="adv_stop"/>Stop all traffic<br/>
+		 <input type="checkbox" id="adv_reason"/>Show reason for blockage<br/>
+		 <div>Warning message:<br/>
+		 <input type="text" id="adv_warning" class="wide"/></div>
+ 		 <div>Redirect blocked pages:<br/>
+		 <input type="text" id="adv_redirect" class="wide"/></div>
+		</div>
+		 <div class="listbox"><span class="link" style="float:right" onclick="toogleList(this, 'blocked_url')">[&#43;]</span><b>Blocked Sites</b><div id="blocked_url"></div></div>
+		 <div class="listbox"><span class="link" style="float:right" onclick="toogleList(this, 'blocked_word')">[&#43;]</span><b>Blocked Keywords</b><div id="blocked_word"></div></div>
+		 <div class="listbox"><span class="link" style="float:right" onclick="toogleList(this, 'trusted_url')">[&#43;]</span><b>Trusted Sites</b><div id="trusted_url"></div></div><br/>
+	 	 <form>
+		 <input type="text" id="keyword_cf" maxlength="20"/><input type="button" id="add_cf" value="Add"/>
+		 <input id="bu" type="radio" name="group1" value="0"/>Block Site
+		 <input id="bw" type="radio" name="group1" value="1"/>Block Keyword
+		 <input id="au" type="radio" name="group1" value="2"/>Trust Site
+		 </form>
+		</div>
+	 </div>
+   <div class="box">
+	 	<div class="header">Profanity Filter</div>
+		<div class="settings">
+		 <input id="pf_status" type="checkbox"/>Enable Profanity Filter<br/><br/>
+		 <div class="listbox"><span class="link" style="float:right" onclick="toogleList(this, 'profanity_word')">[&#43;]</span><b>Profanity Filter</b><div id="profanity_word"></div></div><br/>
+		 <input type="text" id="keyword_pf" maxlength="20"/><input type="button" id="add_pf" value="Add"/>
+		 </form>
+		</div>
+	 </div>
+	 <div class="box">
+		<div class="header">List Subscription</div>
+		<div class="settings">
+	 	<span class="link" style="float:right;position:relative;top:2px" onclick="genList()">Generate Your List</span>		
+		 <input type="checkbox" id="ls_status"/>Enable List Subscription<br/><br/>
+		 <input type="text" id="ls_url" class="wide"/>
+		</div>
+	 </div>
+	 <div id="action_buttons">
+	 <div style="float:right">
+		 <button onclick="reset_options()">Reset</button>
+		 <button onclick="save_options()">Save</button>
+	 </div>
+	 <div id="status" style="visibility:hidden"><img style="position:relative;top:4px;margin-right:4px" src="loader.gif" width="16" height="16">Options Saved</div>
+	 </div>
+	</body>
+</html>

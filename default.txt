@@ -1,0 +1,5 @@
+[tinyFilter]
+CONTENT_FILTER.BLOCK.SITES=porn,redtube,milf,adultfriender
+CONTENT_FILTER.BLOCK.WORDS=porn,18 usc,pornography,porno,milf,hentai,nude,blowjob,fetish,nsfw,sexy video,sexy tube,sexy porn,handjob,bestiality,incest,sexy model,nudity,not safe for work,not safe 4 work,ns4w,gone wild
+CONTENT_FILTER.TRUST.SITES=wikipedia.,twitter.,facebook.
+PROFANITY_FILTER.WORDS=fuck,ass,damn,shit,asshole,piss,cunt,cocksucker,motherfucker,tits,cock,dick

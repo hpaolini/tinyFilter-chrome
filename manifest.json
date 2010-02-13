@@ -1,0 +1,33 @@
+{
+"update_url":"http://clients2.google.com/service/update2/crx",
+  "name": "tinyFilter",
+  "version": "0.1",
+  "description": "tinyFilter: The Web content filter for Google Chrome!",
+  "icons": {
+    "128": "ico.png"
+  },
+	"permissions": [
+    "http://*/*", "https://*/*", "tabs"
+  ],
+  "background_page": "background.html",	
+  "options_page": "options.html",
+  "content_scripts": [
+	 {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": [
+        "site.js",
+				"content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+   },
+   {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": [
+        "overlay.js" 
+       ],
+      "run_at": "document_end",
+      "all_frames": true
+   }
+  ]
+}
