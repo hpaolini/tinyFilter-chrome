@@ -27,13 +27,13 @@ License:
 var tinyFilter_bg = {
 	prefs : {
 		content_filter : (function(){
-			return JSON.parse(localStorage.getItem("content_filter"));
+			return (localStorage.getItem("content_filter")) ? JSON.parse(localStorage.getItem("content_filter")) : [];
 		})(),
 		profanity_filter : (function(){
-			return JSON.parse(localStorage.getItem("profanity_filter"));
+			return (localStorage.getItem("profanity_filter")) ? JSON.parse(localStorage.getItem("profanity_filter")) : [];
 		})(),
 		subscriptions : (function(){
-			return JSON.parse(localStorage.getItem("subscriptions"));
+			return (localStorage.getItem("subscriptions")) ? JSON.parse(localStorage.getItem("subscriptions")) : [];
 		})()
 	},
 
@@ -155,47 +155,61 @@ var tinyFilter_bg = {
 		return subscriptions;
 	},
 
-  load_default : function(){
-		var default_lists = this.loadSubscription("default.txt");
-		var content_filter = {
-			enabled : true,
-			advanced : {
-				warning : "This page is unavailable due to policy restrictions.",
-				stop_all : false,
-				reason : true,
-				redirect : ""
-			},
-			block : {
-				sites : default_lists.content_filter.block.sites,
-				words : default_lists.content_filter.block.words
-			},
-			trust	:	{
-				sites : default_lists.content_filter.trust.sites
-			}
-		};
-		var profanity_filter = {
-			enabled : true,
-			words : default_lists.profanity_filter.words
-		};
-		var subscriptions = {
-			enabled : false,
-			url : ""
-		};
-		
-		localStorage.setItem('content_filter', JSON.stringify(content_filter));
-		localStorage.setItem('profanity_filter', JSON.stringify(profanity_filter));
-		localStorage.setItem('subscriptions', JSON.stringify(subscriptions));
-		localStorage.setItem('first_run', JSON.stringify("false"));
+	/*replaces previous function |load_default()| which ran during first install only*/
+  fixSettings : function(){
+		if(localStorage.getItem('content_filter')==null){
+			var default_lists = this.loadSubscription("default.txt");
+			var content_filter = {
+				enabled : true,
+				advanced : {
+					warning : "This page is unavailable due to policy restrictions.",
+					stop_all : false,
+					reason : true,
+					redirect : ""
+				},
+				block : {
+					sites : default_lists.content_filter.block.sites,
+					words : default_lists.content_filter.block.words
+				},
+				trust	:	{
+					sites : default_lists.content_filter.trust.sites
+				}
+			};
+			localStorage.setItem('content_filter', JSON.stringify(content_filter));
+			this.prefs.content_filter = content_filter;
+		}
 
-		//update background.html settings
-		this.prefs.content_filter = content_filter;
-		this.prefs.profanity_filter = profanity_filter;
-		this.prefs.subscriptions = subscriptions;
+		if(localStorage.getItem('profanity_filter')==null){
+			var default_lists = this.loadSubscription("default.txt");
+			var profanity_filter = {
+				enabled : true,
+				words : default_lists.profanity_filter.words
+			};
+			localStorage.setItem('profanity_filter', JSON.stringify(profanity_filter));
+			this.prefs.profanity_filter = profanity_filter;
+		}
+
+		if(localStorage.getItem('subscriptions')==null){
+			var subscriptions = {
+				enabled : false,
+				url : ""
+			};
+			localStorage.setItem('subscriptions', JSON.stringify(subscriptions));
+			this.prefs.subscriptions = subscriptions;
+		}
+
+		if(localStorage.getItem('general_settings')==null){
+			var general_settings = {
+				password : {
+					hash : ""
+				}
+			};
+			localStorage.setItem('general_settings', JSON.stringify(general_settings));
+		}
 	},
-
 	init : function(){
-		if(JSON.parse(localStorage.getItem("first_run"))!=="false")
-				this.load_default();
+		//might as well as to run this sanity check to recover missing settings
+		this.fixSettings();
 
 		//append subscription lists to local settings
 		if(this.prefs.subscriptions.enabled){
@@ -261,7 +275,41 @@ function loadURI(tab){
  var tabUrl = tinyFilter_bg.prefs.content_filter.advanced.redirect;
  chrome.tabs.update(tab.id, {url: tabUrl});
 }
+var popup = {
+	getDomain: function(url){
+   var link = document.createElement('a');
+   link.href = url;
+   return link.host.replace(/www\./i,'');
+	},
 
+	/*
+		 XXX: possibly join popup.filter() with onload event of options.html
+					and use only one authentication check across the extension
+	*/
+	filter: function(action, tab){
+		var domain=this.getDomain(tab.url);
+			var response=(action===0)?window.confirm("Block \""+domain+"\"?"):window.confirm("Trust \""+domain+"\"?");
+			if(response){
+				var gs = JSON.parse(localStorage.getItem('general_settings'));
+					if(gs.password.hash.length>0){
+						var input = window.prompt("Please enter your password.", "");
+						if(Crypto.SHA256(input) !== gs.password.hash){
+							alert("Action denied: Password is incorrect.");
+							return 0;
+						}
+					}
+
+					var content_filter=tinyFilter_bg.prefs.content_filter;
+					if(action===0){
+						content_filter.block.sites[content_filter.block.sites.length]=domain;
+					}else if(action===1){
+						content_filter.trust.sites[content_filter.trust.sites.length]=domain;
+					}
+					localStorage.setItem('content_filter', JSON.stringify(content_filter));
+					chrome.tabs.update(tab.id, {url: tab.url});
+			}
+	}
+};
 /*var getKeys = function(obj){
   var v="";
   for(var key in obj){
@@ -270,5 +318,7 @@ function loadURI(tab){
   return v;
 }*/
 </script>
+<!-- XXX: i hate having to load the following only for minimal use... gotta figure out something else -->
+<script type="text/javascript" src="2.0.0-crypto-sha256.js"></script>
 </head>
 </html>
