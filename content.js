@@ -84,6 +84,19 @@ tinyFilter.content_scan= function(list){
  }
  F(that.doc.title, "TITLE");
  F(that.doc.body, "BODY");
+
+ if(this.prefs.content_filter.advanced.respect_rta){
+        // Look for the RTA meta tag.
+        var children = this.doc.getElementsByTagName("meta");
+        for(var i = 0; i < children.length; i++) {
+                var elem = children[i];
+                if (elem.name == "RATING" && elem.content == "RTA-5042-1996-1400-1577-RTA") {
+                        window.stop();
+                        this.action("Detected RTA meta tag.");
+                        this.detection = true;
+                }
+        }
+ }
 };
 
 tinyFilter.content_start= function(){

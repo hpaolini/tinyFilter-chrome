@@ -152,6 +152,7 @@ function save_options() {
 			warning : Dom.get("adv_warning").value || "This page is unavailable due to policy restrictions.",
 			stop_all : Dom.get("adv_stop").checked,
 			reason : Dom.get("adv_reason").checked,
+			respect_rta : Dom.get("adv_respect_rta").checked,
 			redirect : (function(){
 				var adv_redirect = Dom.get("adv_redirect").value || "",
 						regex = /^(https?|ftp|file):\/\/.+$/i;
@@ -244,6 +245,7 @@ function restore_options(){
 	Dom.get("cf_status").checked = cf.enabled || false;  
   Dom.get("adv_stop").checked = cf.advanced.stop_all || false;
  	Dom.get("adv_reason").checked = cf.advanced.reason || false;
+ 	Dom.get("adv_respect_rta").checked = cf.advanced.respect_rta || false;
  	Dom.get("adv_warning").value = cf.advanced.warning;
  	Dom.get("adv_redirect").value = cf.advanced.redirect;
 
@@ -349,6 +351,7 @@ function reset_options(){
 		 <div id="adv_settings" class="advanced">
 		 <input type="checkbox" id="adv_stop"/>Stop all traffic<br/>
 		 <input type="checkbox" id="adv_reason"/>Show reason for blockage<br/>
+		 <input type="checkbox" id="adv_respect_rta"/>Respect RTA meta tag<br/>
 		 <div>Warning message:<br/>
 		 <input type="text" id="adv_warning" class="wide"/></div>
  		 <div>Redirect blocked pages to:<br/>
