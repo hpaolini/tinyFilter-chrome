@@ -1,7 +1,7 @@
 {
 "update_url":"http://clients2.google.com/service/update2/crx",
   "name": "tinyFilter",
-  "version": "0.2",
+  "version": "0.3",
   "description": "tinyFilter: The Web content filter for Google Chrome!",
   "icons": {
     "48": "48.png",
