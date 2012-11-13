@@ -1,29 +1,30 @@
 <!--
 Copyright:
 
-    Copyright (C) 2012 Hunter Paolini <corvineum@gmail.com>
+	Copyright (C) 2012 Hunter Paolini <corvineum@gmail.com>
 
 License:
 
 		This file is part of tinyFilter.
 
-    tinyFilter is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+	tinyFilter is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
 
-    tinyFilter is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	tinyFilter is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with tinyFilter; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+	You should have received a copy of the GNU General Public License
+	along with tinyFilter; if not, write to the Free Software
+	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 -->
 <html>
-<head>
-<script>
+	<head>
+		<script type="text/javascript">
+
 var tinyFilter_bg = {
 	prefs : {
 		content_filter : (function(){
@@ -36,66 +37,73 @@ var tinyFilter_bg = {
 			return (localStorage.getItem("subscriptions")) ? JSON.parse(localStorage.getItem("subscriptions")) : [];
 		})()
 	},
-
 	prepareHash : function(list){
-		var hashMap={},
-				l=list.length;
+		var hashMap = {};
+		var l = list.length;
 		while(l--){
-			var keyword=list[l];
-			if(keyword===undefined)
+			var keyword = list[l];
+			if(keyword === undefined){
 				continue;
-
+			}
+			
 			keyword = escape(keyword.toLowerCase());
 			keyword = keyword.split("%20");
-			if(keyword.length==1){
+			if(keyword.length == 1){
 				hashMap[keyword[0]]=1;
 			}else{
-				var j=keyword.length, multi = "";
+				var j = keyword.length;
+				var multi = "";
 				while(j--){
-				var k = hashMap[keyword[j]];
-				if(k===1){break;} /*worthless adding |word1 word2| when |word1| is present as an individual pattern*/
-				if(j===0){
-					if(k!=undefined){
-						if(!this.isDuplicate(k, multi)){
-							hashMap[keyword[0]].push(multi);
+					var k = hashMap[keyword[j]];
+					if(k === 1){
+ 						/* worthless adding |word1 word2| when |word1| is present as an individual pattern */
+						break;
+					}
+					if(j === 0){
+						if(k != undefined){
+							if(!this.isDuplicate(k, multi)){
+								hashMap[keyword[0]].push(multi);
+							}
+						}else{
+							hashMap[keyword[0]]=[multi];
 						}
 					}else{
-						hashMap[keyword[0]]=[multi];
-					}
-				}else{
-					multi=(multi!="")?keyword[j]+" "+multi:keyword[j];
-					if(k!=undefined){
-						if(!this.isDuplicate(k, 0)){
-							hashMap[keyword[j]].push(0);
+						multi = (multi != "") ? keyword[j] + " " + multi:keyword[j];
+						if(k != undefined){
+							if(!this.isDuplicate(k, 0)){
+								hashMap[keyword[j]].push(0);
+							}
+						}else{
+							hashMap[keyword[j]] = [0];
 						}
-					}else{
-						hashMap[keyword[j]]=[0];
 					}
-				}
 				}
 			}
-		}//alert(getKeys(hashMap));
+		}
+		//alert(getKeys(hashMap));
 		return hashMap;
 	},
 
 	isDuplicate : function(arr, key){
- 		var len=arr.length;
+ 		var len = arr.length;
  		while(len--){
-			if(arr[len]==key){return true;}
+			if(arr[len] == key){
+				return true;
+			}
  		}
  		return false;
 	},
 
 	generateSubscription : function(){
 		var dataURI = "data:text/plain;charset=utf-8,%23 TINYFILTER EXTENSION%0A%23 LIST SUBSCRIPTION%0A%23 DATE: " +
-								new Date() + "%0A%0A[tinyFilter]" +
-								"%0A%0A%23 Block pages based on following criteria" +
-								"%0ACONTENT_FILTER.BLOCK.SITES=" + this.prefs.content_filter.block.sites +
-								"%0A%0ACONTENT_FILTER.BLOCK.WORDS=" + this.prefs.content_filter.block.words +
-								"%0A%0A%23 Trust pages" +
-								"%0ACONTENT_FILTER.TRUST.SITES=" + this.prefs.content_filter.trust.sites +
-								"%0A%0A%23 Mask profanity" +
-								"%0APROFANITY_FILTER.WORDS=" + this.prefs.profanity_filter.words;
+			new Date() + "%0A%0A[tinyFilter]" +
+			"%0A%0A%23 Block pages based on following criteria" +
+			"%0ACONTENT_FILTER.BLOCK.SITES=" + this.prefs.content_filter.block.sites +
+			"%0A%0ACONTENT_FILTER.BLOCK.WORDS=" + this.prefs.content_filter.block.words +
+			"%0A%0A%23 Trust pages" +
+			"%0ACONTENT_FILTER.TRUST.SITES=" + this.prefs.content_filter.trust.sites +
+			"%0A%0A%23 Mask profanity" +
+			"%0APROFANITY_FILTER.WORDS=" + this.prefs.profanity_filter.words;
 		chrome.tabs.create({url:dataURI});
 	},
 
@@ -104,12 +112,12 @@ var tinyFilter_bg = {
 		xhr.open("GET", url, false);
 		xhr.send();
 
-		var file = xhr.responseText.split(/[\n]+/),
-	    legit = false,
-	    re_comment = /^(#|\\s+#)/,		//comment preceded by #
-	    re_legit = /^\[tinyFilter\]/i,
-	    re_cfg_name = /.*\=/,
-	    line;
+		var file = xhr.responseText.split(/[\n]+/);
+		var legit = false;
+		var re_comment = /^(#|\\s+#)/;		//comment preceded by #
+		var re_legit = /^\[tinyFilter\]/i;
+		var re_cfg_name = /.*\=/;
+		var line;
 
 		var subscriptions = {
 			content_filter : {
@@ -119,14 +127,15 @@ var tinyFilter_bg = {
 			profanity_filter : {}
 		};
 
-		for(var i=0, len=file.length; i<len; i++){
+		for(var i = 0, len = file.length; i < len; i++){
 			line = file[i];
 			
-			if(re_comment.test(line))
+			if(re_comment.test(line)){
 				continue;
+			}
 		
 			if(re_legit.test(line)){
-				legit=true;
+				legit = true;
 				continue;
 			}
 
@@ -156,8 +165,8 @@ var tinyFilter_bg = {
 	},
 
 	/*replaces previous function |load_default()| which ran during first install only*/
-  fixSettings : function(){
-		if(localStorage.getItem('content_filter')==null){
+	fixSettings : function(){
+		if(localStorage.getItem('content_filter') == null){
 			var default_lists = this.loadSubscription("default.txt");
 			var content_filter = {
 				enabled : true,
@@ -179,7 +188,7 @@ var tinyFilter_bg = {
 			this.prefs.content_filter = content_filter;
 		}
 
-		if(localStorage.getItem('profanity_filter')==null){
+		if(localStorage.getItem('profanity_filter') == null){
 			var default_lists = this.loadSubscription("default.txt");
 			var profanity_filter = {
 				enabled : true,
@@ -189,7 +198,7 @@ var tinyFilter_bg = {
 			this.prefs.profanity_filter = profanity_filter;
 		}
 
-		if(localStorage.getItem('subscriptions')==null){
+		if(localStorage.getItem('subscriptions') == null){
 			var subscriptions = {
 				enabled : false,
 				url : ""
@@ -198,7 +207,7 @@ var tinyFilter_bg = {
 			this.prefs.subscriptions = subscriptions;
 		}
 
-		if(localStorage.getItem('general_settings')==null){
+		if(localStorage.getItem('general_settings') == null){
 			var general_settings = {
 				password : {
 					hash : ""
@@ -236,89 +245,109 @@ var tinyFilter_bg = {
 	}
 };
 
-//TODO: clean up this messy monster
-(function updateSubscription(){
-if(tinyFilter_bg.prefs.subscriptions && tinyFilter_bg.prefs.subscriptions.enabled && 
-			(new Date().getTime() - tinyFilter_bg.prefs.subscriptions.last_update > 259200000)){
-	var response = tinyFilter_bg.loadSubscription(tinyFilter_bg.prefs.subscriptions.url);
-	if(response){
-		tinyFilter_bg.prefs.subscriptions.content_filter.block.sites = (response.content_filter.block.sites) ? response.content_filter.block.sites : [];
-		tinyFilter_bg.prefs.subscriptions.content_filter.block.words = (response.content_filter.block.words) ? response.content_filter.block.words : [];
-		tinyFilter_bg.prefs.subscriptions.content_filter.trust.sites = (response.content_filter.trust.sites) ? response.content_filter.trust.sites : [];
-		tinyFilter_bg.prefs.subscriptions.profanity_filter.words = (response.profanity_filter.words) ? response.profanity_filter.words : [];
-		tinyFilter_bg.prefs.subscriptions.last_update = new Date().getTime();
-		localStorage.setItem('subscriptions', JSON.stringify(tinyFilter_bg.prefs.subscriptions));
-		//alert("subscription list updated");
+(function(){
+	// Update Subscription
+	
+	var tf_subs = tinyFilter_bg.prefs.subscriptions;
+	if(!tf_subs){
+		return;
 	}
-}
+	
+	var three_days = 259200000;
+	var time_since_last_update = new Date().getTime() - tf_subs.last_update;
+	
+	if(tf_subs.enabled && time_since_last_update > three_days){
+		var response = tinyFilter_bg.loadSubscription(tinyFilter_bg.prefs.subscriptions.url);
+		if(response){
+			tinyFilter_bg.prefs.subscriptions.content_filter.block.sites = (response.content_filter.block.sites) ? response.content_filter.block.sites : [];
+			tinyFilter_bg.prefs.subscriptions.content_filter.block.words = (response.content_filter.block.words) ? response.content_filter.block.words : [];
+			tinyFilter_bg.prefs.subscriptions.content_filter.trust.sites = (response.content_filter.trust.sites) ? response.content_filter.trust.sites : [];
+			tinyFilter_bg.prefs.subscriptions.profanity_filter.words = (response.profanity_filter.words) ? response.profanity_filter.words : [];
+			tinyFilter_bg.prefs.subscriptions.last_update = new Date().getTime();
+			localStorage.setItem('subscriptions', JSON.stringify(tinyFilter_bg.prefs.subscriptions));
+			//alert("subscription list updated");
+		}
+	}
 })();
 
 tinyFilter_bg.init();
 
 chrome.extension.onRequest.addListener(
-  function(request, sender, sendResponse){
-   	switch (request.name){
-	    case "getPreferences":
-  	    sendResponse(
-    	    tinyFilter_bg.prefs
-        );
-        break;
+	function(request, sender, sendResponse){
+		switch (request.name){
+			case "getPreferences":
+				sendResponse(tinyFilter_bg.prefs);
+				break;
+
 			case "redirectPage":
 				loadURI(sender.tab);
 				break;
-        default: break;
-   	}
-  }
+
+			default:
+				break;
+		}
+	}
 );
 
 function loadURI(tab){
- var tabUrl = tinyFilter_bg.prefs.content_filter.advanced.redirect;
- chrome.tabs.update(tab.id, {url: tabUrl});
+	var tabUrl = tinyFilter_bg.prefs.content_filter.advanced.redirect;
+	chrome.tabs.update(tab.id, {url: tabUrl});
 }
 var popup = {
 	getDomain: function(url){
-   var link = document.createElement('a');
-   link.href = url;
-   return link.host.replace(/www\./i,'');
+		var link = document.createElement('a');
+		link.href = url;
+		return link.host.replace(/www\./i,'');
 	},
 
 	/*
-		 XXX: possibly join popup.filter() with onload event of options.html
-					and use only one authentication check across the extension
+		TODO: possibly join popup.filter() with onload event of options.html
+			and use only one authentication check across the extension
 	*/
 	filter: function(action, tab){
 		var domain=this.getDomain(tab.url);
-			var response=(action===0)?window.confirm("Block \""+domain+"\"?"):window.confirm("Trust \""+domain+"\"?");
-			if(response){
-				var gs = JSON.parse(localStorage.getItem('general_settings'));
-					if(gs.password.hash.length>0){
-						var input = window.prompt("Please enter your password.", "");
-						if(Crypto.SHA256(input) !== gs.password.hash){
-							alert("Action denied: Password is incorrect.");
-							return 0;
-						}
-					}
-
-					var content_filter=tinyFilter_bg.prefs.content_filter;
-					if(action===0){
-						content_filter.block.sites[content_filter.block.sites.length]=domain;
-					}else if(action===1){
-						content_filter.trust.sites[content_filter.trust.sites.length]=domain;
-					}
-					localStorage.setItem('content_filter', JSON.stringify(content_filter));
-					chrome.tabs.update(tab.id, {url: tab.url});
+			
+		if(action === 0){
+			var response = window.confirm("Block \""+domain+"\"?");
+		}else{
+			var response = window.confirm("Trust \"" + domain + "\"?");
+		}
+		if(response){
+			var gs = JSON.parse(localStorage.getItem('general_settings'));
+			if(gs.password.hash.length>0){
+			var input = window.prompt("Please enter your password.", "");
+				if(Crypto.SHA256(input) !== gs.password.hash){
+					alert("Action denied: Password is incorrect.");
+					return 0;
+				}
 			}
+			var content_filter=tinyFilter_bg.prefs.content_filter;
+			if(action === 0){
+				content_filter.block.sites[content_filter.block.sites.length]=domain;
+			}else if(action === 1){
+				content_filter.trust.sites[content_filter.trust.sites.length]=domain;
+			}
+			localStorage.setItem('content_filter', JSON.stringify(content_filter));
+			chrome.tabs.update(tab.id, {
+				url: tab.url
+			});
+		}
 	}
 };
-/*var getKeys = function(obj){
-  var v="";
-  for(var key in obj){
-    v=v+"\n"+key+": "+obj[key];
-  }
-  return v;
-}*/
-</script>
-<!-- XXX: i hate having to load the following only for minimal use... gotta figure out something else -->
-<script type="text/javascript" src="2.0.0-crypto-sha256.js"></script>
-</head>
+
+/*
+var getKeys = function(obj){
+	var v="";
+	for(var key in obj){
+		v=v+"\n"+key+": "+obj[key];
+	}
+	return v;
+}
+*/
+
+		</script>
+		
+		<!-- TODO: i hate having to load the following only for minimal use... gotta figure out something else -->
+		<script type="text/javascript" src="2.0.0-crypto-sha256.js"></script>
+	</head>
 </html>
