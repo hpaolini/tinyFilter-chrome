@@ -383,15 +383,19 @@ var reset_options = function(){
 				</div>
 				<input id="cf_status" type="checkbox"/>Enable Content Filter<br/><br/>
 				<div id="adv_settings" class="advanced">
-					<input type="checkbox" id="adv_stop"/>Stop all traffic<br/>
-					<input type="checkbox" id="adv_reason"/>Show reason for blockage<br/>
+					<label><input type="checkbox" id="adv_stop"/> Stop all traffic</label><br/>
+					<label><input type="checkbox" id="adv_reason"/> Show reason for blockage</label><br/>
 					<div>
-						Warning message:<br/>
-						<input type="text" id="adv_warning" class="wide"/>
+						<label>
+							Warning message:<br/>
+							<input type="text" id="adv_warning" class="wide"/>
+						</label>
 					</div>
 					<div>
-						Redirect blocked pages to:<br/>
-						<input type="text" id="adv_redirect" class="wide"/>
+						<label>
+							Redirect blocked pages to:<br/>
+							<input type="text" id="adv_redirect" class="wide"/>
+						</label>
 					</div>
 				</div>
 				<div class="listbox">
@@ -419,9 +423,9 @@ var reset_options = function(){
 				<form>
 					<input type="text" id="keyword_cf" maxlength="20"/>
 					<input type="button" id="add_cf" value="Add"/>
-					<input id="bu" type="radio" name="group1" value="0"/>Block Site
-					<input id="bw" type="radio" name="group1" value="1"/>Block Keyword
-					<input id="au" type="radio" name="group1" value="2"/>Trust Site
+					<label><input id="bu" type="radio" name="group1" value="0"/> Block Site</label>
+					<label><input id="bw" type="radio" name="group1" value="1"/> Block Keyword</label>
+					<label><input id="au" type="radio" name="group1" value="2"/> Trust Site</label>
 				</form>
 			</div>
 		</div>
@@ -449,7 +453,8 @@ var reset_options = function(){
 				<div class="link" style="float:right;position:relative;top:-2px">
 					<button onclick="genList()">Generate Your List</button>
 				</div>
-				<input type="checkbox" id="ls_status"/>Enable List Subscription<br/><br/>
+				<label><input type="checkbox" id="ls_status"/> Enable List Subscription</label>
+				<br/><br/>
 				<input type="text" id="ls_url" class="wide"/>
 			</div>
 		</div>
