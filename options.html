@@ -99,20 +99,20 @@ Event.add(window, 'load', function(){
 		keyword = keyword.replace(/<(.|\n)+?>/g,'');
 
 		if(bu){
-			list_bs[list_bs.length]=keyword;			
+			list_bs[list_bs.length] = keyword;			
 			populateList('blocked_url', keyword);
 		}else if(bw){
-			list_bw[list_bw.length]=keyword;
+			list_bw[list_bw.length] = keyword;
 			populateList('blocked_word', keyword);
 		}else if(au){
-			list_ts[list_ts.length]=keyword;
+			list_ts[list_ts.length] = keyword;
 			populateList('trusted_url', keyword);
 		}else {return false;}
 	});
 	Event.add('add_pf', 'click', function(){
 		var keyword = Dom.get("keyword_pf").value;
 		keyword = keyword.replace(/<(.|\n)+?>/g,'');
-		list_pf[list_pf.length]=keyword;
+		list_pf[list_pf.length] = keyword;
 		populateList('profanity_word', keyword);
 	});
 });
@@ -130,11 +130,24 @@ var populateList = function(list, keyword){
 		var span = this.parentNode;
 		var keyword = span.innerHTML.replace(/<(.*)?>/g,'');
 		switch(span.parentNode.id){
-			case "blocked_url": removeKeyword(list_bs, keyword); break;
-			case "blocked_word": removeKeyword(list_bw, keyword); break;
-			case "trusted_url": removeKeyword(list_ts, keyword); break;
-			case "profanity_word": removeKeyword(list_pf, keyword); break;
-			default: break;
+			case "blocked_url":
+				removeKeyword(list_bs, keyword);
+				break;
+			
+			case "blocked_word":
+				removeKeyword(list_bw, keyword);
+				break;
+			
+			case "trusted_url":
+				removeKeyword(list_ts, keyword);
+				break;
+			
+			case "profanity_word":
+				removeKeyword(list_pf, keyword);
+				break;
+			
+			default:
+				break;
 		}
 		Dom.remove(span);
 	});
@@ -143,9 +156,19 @@ var populateList = function(list, keyword){
 var list_bs = list_bw = list_ts = list_pf = [], password = null;
 
 var removeKeyword = function(list, keyword){
-	var l=list.length;
-	while(l--){if(list[l]==keyword){list.splice(l,1);}};
-}
+	
+	var len = list.length;
+	while(len--){
+		
+		// TODO: Fix bug where the last array items from
+		//  defaults.txt do not have weird new line char.
+		//  This string comparison fails because of it.
+		if(list[len] == keyword){
+			list.splice(len, 1);
+		}
+	};
+	
+};
 
 // Saves options
 var save_options = function(){
@@ -339,7 +362,10 @@ var reset_options = function(){
 		</script>
 	</head>
 	<body>
-		<div style="width:510px;margin:0 auto;color:#aaa;"><h1>tinyFilter</h1>&nbsp;&nbsp;by <a href="http://www.twitter.com/hunterPaolini">Hunter Paolini</a></div> 
+		<div style="width:510px;margin:0 auto;color:#aaa;">
+			<h1>tinyFilter</h1>
+			&nbsp;&nbsp;by <a href="https://github.com/hpaolini/tinyFilter-chrome">Hunter Paolini</a>
+		</div> 
 		<div class="box">
 			<div class="header">General Settings</div>
 			<div class="settings">
@@ -432,7 +458,10 @@ var reset_options = function(){
 				<button onclick="reset_options()">Reset</button>
 				<button onclick="save_options()">Save</button>
 			</div>
-			<div id="status" style="visibility:hidden"><img style="position:relative;top:4px;margin-right:4px" src="loader.gif" width="16" height="16">Options Saved</div>
+			<div id="status" style="visibility:hidden">
+				<img style="position:relative;top:4px;margin-right:4px" src="loader.gif" width="16" height="16">
+				Options Saved
+			</div>
 		</div>
 	</body>
 </html>
