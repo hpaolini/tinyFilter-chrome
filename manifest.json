@@ -16,7 +16,7 @@
 		"http://*/*", "https://*/*", "tabs"
 	],
 	"background": {
-		"scripts" : ["background.js"],
+		"scripts" : ["background.js", "2.0.0-crypto-sha256.js"],
 		"persistent" : false
 	},
 	"options_page": "options.html",
