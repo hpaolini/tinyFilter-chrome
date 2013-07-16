@@ -21,9 +21,6 @@ License:
 	along with tinyFilter; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 -->
-<html>
-	<head>
-		<script type="text/javascript">
 
 var tinyFilter_bg = {
 	prefs : {
@@ -344,10 +341,3 @@ var getKeys = function(obj){
 	return v;
 }
 */
-
-		</script>
-		
-		<!-- TODO: i hate having to load the following only for minimal use... gotta figure out something else -->
-		<script type="text/javascript" src="2.0.0-crypto-sha256.js"></script>
-	</head>
-</html>
