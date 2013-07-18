@@ -1,7 +1,7 @@
 /*
 Copyright:
 
-    Copyright (C) 2012 Hunter Paolini <corvineum@gmail.com>
+    Copyright (C) 2013 Hunter Paolini <me@hpaolini.com>
 
 License:
 
