@@ -2,7 +2,7 @@
 <!--
 Copyright:
 
-    Copyright (C) 2012 Hunter Paolini <corvineum@gmail.com>
+    Copyright (C) 2013 Hunter Paolini <me@hpaolini.com>
 
 License:
 
@@ -53,25 +53,11 @@ border-bottom-right-radius:2px 2px;
 </style>
 </head>
 <body>
-<button onclick="actionSite(0)">Block this site</button>
-<button onclick="actionSite(1)">Trust this site</button>
+<button id="btn_ppbs" onclick="actionSite(0)">Block this site</button>
+<button id="btn_ppts" onclick="actionSite(1)">Trust this site</button>
 <hr/>
-<button onclick="openOptions()">Options...</button>
+<button id="btn_ppopt" onclick="openOptions()">Options...</button>
 </body>
-<script>
-function actionSite(id){
-/* id = 0 --> block
-			= 1 --> trust */
-chrome.tabs.getSelected(null,function(tab){
-	var background = chrome.extension.getBackgroundPage();
-	window.close();
-	background.popup.filter(id, tab);
-});
-}
-function openOptions(){
- chrome.tabs.create({url:"options.html"});
- window.close();
-}
-</script>
+		<script type="text/javascript" src="popup.js"></script>
 </html>
 
